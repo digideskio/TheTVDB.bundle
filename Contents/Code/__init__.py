@@ -613,7 +613,7 @@ class TVDBAgent(Agent.TV_Shows):
 
           # Copy attributes from the XML
           episode.title = el_text(episode_el, 'EpisodeName')
-          episode.summary = el_text(episode_el, 'Overview')
+          episode.summary = el_text(episode_el, 'Overview').replace('""', '"')
           
           try: episode.absolute_number = int(el_text(episode_el, 'absolute_number'))
           except: pass
