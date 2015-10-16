@@ -502,15 +502,25 @@ class TVDBAgent(Agent.TV_Shows):
       )
     )
 
+  # Cleanup double quotes and wrongly encoded characters
+  # Remove multiple spaces, but leave newlines (this also strips whitespace from begining and end of the string).
+  def cleanupString(self, str):
+    str = str.replace('""', '"')
+    str = str.replace('Ã©', 'é')
+    str = str.replace('Ã¨', 'è')
+    str = str.replace('â€”', '—')
+    str = '\n'.join(' '.join(line.split()) for line in str.split('\n'))
+    return str
+
   def readTags(self, element, list, name):
     try:
-      el_text = lambda element, xp: element.xpath(xp)[0].text
+      el_text = lambda element, xp: self.cleanupString(element.xpath(xp)[0].text)
       tag_text = el_text(element, name)
       if tag_text.find('|') != -1:
         tags = tag_text.split('|')
       else:
         tags = tag_text.split(',')
-      
+
       tags = [tag.strip() for tag in tags if len(tag) > 0]
       list.clear()
       for tag in tags:
@@ -548,9 +558,9 @@ class TVDBAgent(Agent.TV_Shows):
     series_el = root_el.xpath('Series')[0]
     
     # Convenience functions
-    el_text = lambda element, xp: element.xpath(xp)[0].text if element.xpath(xp)[0].text else '' 
+    el_text = lambda element, xp: self.cleanupString(element.xpath(xp)[0].text) if element.xpath(xp)[0].text else ''
     parse_date = lambda s: Datetime.ParseDate(s).date()
-    
+
     # Copy attributes from the XML element to the metadata object
     metadata.title = el_text(series_el, 'SeriesName')
     metadata.summary = el_text(series_el, 'Overview')
@@ -613,7 +623,7 @@ class TVDBAgent(Agent.TV_Shows):
 
           # Copy attributes from the XML
           episode.title = el_text(episode_el, 'EpisodeName')
-          episode.summary = el_text(episode_el, 'Overview').replace('""', '"')
+          episode.summary = el_text(episode_el, 'Overview')
           
           try: episode.absolute_number = int(el_text(episode_el, 'absolute_number'))
           except: pass
